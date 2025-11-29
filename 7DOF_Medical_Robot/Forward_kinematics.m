@@ -1,9 +1,6 @@
-function T = Forward_kinematics(link,Q,fcla)
+function T = Forward_kinematics(Link,Q,fcla)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
-ToRad = pi/180;
-
-Link = Transimation_Matrix_Build(link);
 
 radius    = 25;  %25
 len       = 60;  %60
@@ -36,7 +33,7 @@ for i=1:8
 %     DrawFrame(Link(i).T);
 end
 
-DrawFrame(Link(5).T);
+DrawFrame(Link(1).T);
 DrawFrame(Link(8).T);
 
 axis([-300,600,-300,600,-300,600]);
