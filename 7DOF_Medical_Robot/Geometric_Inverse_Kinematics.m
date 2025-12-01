@@ -1,4 +1,4 @@
-function Q = Geometric_Inverse_Kinematics(link,T07)
+function Q = Geometric_Inverse_Kinematics(Link,T07)
 %几何代数法求解前三轴关节变量，Z-Y-Z欧拉角求解后三轴
 %                   q[1,1] --------------q[1,2]
 %                     |                     |
@@ -15,22 +15,60 @@ function Q = Geometric_Inverse_Kinematics(link,T07)
 p = T07(1:3,4);
 length = 10;
 step = 1;
-Q = zeros(8,7,length/step+1);  %预分配空间，最多11组解
+
+Q = zeros(8,7,length/step+1);  %预分配空间，最多11组解 
+T04 = zeros(4,4,4);
+T05 = zeros(4,4,4);
+T57 = zeros(4,4,4);
+alpha = zeros(2,4);
+beta = zeros(2,4);
+gamma = zeros(2,4);
+
+T00 = [1 0 0 0;
+       0 1 0 0;
+       0 0 1 0;
+       0 0 0 1];
+
+T01 = @(theta) [cosd(theta)  -sind(theta)   0      0;
+               sind(theta)    cosd(theta)   0      0;
+                   0             0          1     300;
+                   0             0          0      1];
+
+T12 = @(theta) [cosd(theta)  -sind(theta)   0      0;
+                   0             0         -1    -150;
+               sind(theta)    cosd(theta)   0      0;
+                   0             0          0      1];
+
+T23 = @(theta) [cosd(theta)  -sind(theta)   0     200;
+               sind(theta)    cosd(theta)   0      0;
+                   0             0          1      0;
+                   0             0          0      1];
+
+T34 = @(d) [ 1  0  0  0;
+             0  0  1  d;
+             0 -1  0  0;
+             0  0  0  1];
+
+T45 = @(theta) [cosd(theta)  -sind(theta)   0      0;
+               sind(theta)    cosd(theta)   0      0;
+                   0             0          1      0;
+                   0             0          0      1];
+
 for d4 = 0:step:length
     d = 150+d4;
 
-    z = p(3)-link(2).d;
-    l = sqrt(p(1)^2+p(2)^2-link(3).d^2);
+    z = p(3)-Link(2).d;
+    l = sqrt(p(1)^2+p(2)^2-Link(3).d^2);
 
-    q(1,1) = 90 + atan2d(p(2),p(1)) - atan2d(l,link(3).d);  %th1_1
-    q(1,2) = 90 + atan2d(p(2),p(1)) - atan2d(-l,link(3).d); %th1_2
+    q(1,1) = 90 + atan2d(p(2),p(1)) - atan2d(l,Link(3).d);  %th1_1
+    q(1,2) = 90 + atan2d(p(2),p(1)) - atan2d(-l,Link(3).d); %th1_2
 
-    x1 = (p(1)-link(3).d*cosd(q(1,1)-90))/cosd(q(1,1));
-    x2 = (p(1)-link(3).d*cosd(q(1,2)-90))/cosd(q(1,2));
+    x1 = (p(1)-Link(3).d*cosd(q(1,1)-90))/cosd(q(1,1));
+    x2 = (p(1)-Link(3).d*cosd(q(1,2)-90))/cosd(q(1,2));
 
-    q(3,1) = asind(-(x1^2+z^2-link(3).a^2-d^2)/(2*link(3).a*d));  %th3_1
+    q(3,1) = asind(-(x1^2+z^2-Link(3).a^2-d^2)/(2*Link(3).a*d));  %th3_1
     q(3,2) = 180-q(3,1);                                            %th3_2
-    q(3,3) = asind(-(x2^2+z^2-link(3).a^2-d^2)/(2*link(3).a*d));  %th3_3
+    q(3,3) = asind(-(x2^2+z^2-Link(3).a^2-d^2)/(2*Link(3).a*d));  %th3_3
     q(3,4) = 180-q(3,3);                                            %th3_4
 
     th1=90+q(3,1);
@@ -38,10 +76,10 @@ for d4 = 0:step:length
     th3=90+q(3,3);
     th4=90+q(3,4);
 
-    k11 = link(3).a+d*cosd(th1);
-    k12 = link(3).a+d*cosd(th2);
-    k13 = link(3).a+d*cosd(th3);
-    k14 = link(3).a+d*cosd(th4);
+    k11 = Link(3).a+d*cosd(th1);
+    k12 = Link(3).a+d*cosd(th2);
+    k13 = Link(3).a+d*cosd(th3);
+    k14 = Link(3).a+d*cosd(th4);
 
     k21 = d*sind(th1);
     k22 = d*sind(th2);
@@ -58,34 +96,22 @@ for d4 = 0:step:length
     q(2,3) = atan2d(z/r3,x2/r3)-atan2d(k23,k13);    %th2_3
     q(2,4) = atan2d(z/r4,x2/r4)-atan2d(k24,k14);    %th2_4
 
-    Link = Transimation_Matrix_Build(link);
-    D = symvar(Link(5).T);
-    Link(5).T = subs(Link(5).T,D,d);
-    T04 = zeros(4,4,4);
-    T05 = zeros(4,4,4);
-    T57 = zeros(4,4,4);
     for i = 1:2
-        q2 = symvar(Link(2).T);
-        T2 = subs(Link(2).T,q2,q(1,i));
+        T1 = T01(q(1,i));
         for j = 2*i-1:2*i
-            q3 = symvar(Link(3).T);
-            T3 = subs(Link(3).T,q3,q(2,j));
-            q4 = symvar(Link(4).T);
-            T4 = subs(Link(4).T,q4,q(3,j));
-            T04(:,:,j) = double(Link(1).T*T2*T3*T4*Link(5).T);  %根据前三轴计算T04
+            T2 = T12(q(2,j));
+            T3 = T23(q(3,j));
+            T04(:,:,j) = T00*T1*T2*T3*T34(d);  %根据前三轴计算T04
         end
     end
-    th = symvar(Link(6).T);
-    Link(6).T = double(subs(Link(6).T,th,0));
-    alpha = zeros(2,4);
-    beta = zeros(2,4);
-    gamma = zeros(2,4);
+
     for i = 1:4
-        T05(:,:,i) = T04(:,:,i)*Link(6).T;   %得到T05
+        T05(:,:,i) = T04(:,:,i)*T45(0);   %得到T05
         %T07 = T05*T57
         T57(:,:,i) = T05(:,:,i)\T07;
         [alpha(:,i), beta(:,i), gamma(:,i)] = ZYZ_EulerAngle_Solution(T57(:,:,i));  %zyz欧拉角求解后三轴
     end
+
     alpha = alpha - 180;   %从欧拉角得到后三轴真实角度
     gamma = gamma - 180;
 
@@ -94,7 +120,7 @@ for d4 = 0:step:length
     gamma = NormalizeAngle(gamma);
     q = NormalizeAngle(q);
 
-    Q1= [q(1,1),q(2,1),q(3,1),d4,alpha(1,1) ,beta(1,1),gamma(1,1) ];  
+    Q1= [q(1,1),q(2,1),q(3,1),d4,alpha(1,1) ,beta(1,1),gamma(1,1) ];
     Q2= [q(1,1),q(2,1),q(3,1),d4,alpha(2,1) ,beta(2,1),gamma(2,1) ];
     Q3= [q(1,1),q(2,2),q(3,2),d4,alpha(1,2) ,beta(1,2),gamma(1,2) ];
     Q4= [q(1,1),q(2,2),q(3,2),d4,alpha(2,2) ,beta(2,2),gamma(2,2) ];
@@ -104,5 +130,6 @@ for d4 = 0:step:length
     Q8= [q(1,2),q(2,4),q(3,4),d4,alpha(2,4) ,beta(2,4),gamma(2,4) ];
     Qi=[Q1;Q2;Q3;Q4;Q5;Q6;Q7;Q8];  %得到8组解，每行为一组解
     Q(:,:,d4/step+1)=Qi;  %将不同d4下的解存入Q矩阵中
+    
 end
 end   

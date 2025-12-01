@@ -15,8 +15,11 @@ th6=0;
 th7=0; 
 
 Q=[th1,th2,th3,d4,th5,th6,th7]';
-T = Forward_kinematics(Link,Q,0)
+T = Forward_kinematics(Link,Q,0);
+% T =[ 1     0     0   245;
+%      0     1     0     0;
+%      0     0     1     0;
+%      0     0     0     1];
+%Piper_Inverse_Kinematics(Link,T);
+Geometric_Inverse_Kinematics(Link,T);
 
-% q = Geometric_Inverse_Kinematics(Link,T)
-Piper_Inverse_Kinematics(Link,T);
-Geometric_Inverse_Kinematics(Link,T)
