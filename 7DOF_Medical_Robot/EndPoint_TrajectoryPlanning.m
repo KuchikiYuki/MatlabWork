@@ -30,10 +30,6 @@ dt =0.01;
 %      0   -1    0];
 % [alpha, beta, gamma] = ZYZ_EulerAngle_Solution(R)
 
-x = 150:1:450;
-y = 150:1:450;
-z = 150:1:450;
-
 [q,~,~]=Tplanning(q0, q1, v_max, A, dt);
 
 step = length(q);
@@ -43,7 +39,7 @@ step = length(q);
 % plot(t,q(:,6));
 
 Forward_kinematics(Link,q_prev,0);
-pause(1);
+pause(2);
 % view(0,0);
 % hold on;
 for i = 1:step
@@ -63,9 +59,10 @@ for i = 1:step
           0      0      0        1  ];
     Q = Geometric_Inverse_Kinematics(Link,T);
     [q_best,~,~] = Select_Optimal_Solution(Q,q_prev);
+    q_prev = q_best;
     if i < step
         Forward_kinematics(Link,q_best,1);
-        plot3(x,y,z,'r','LineWidth',1);
+        plot3(q(:,1),q(:,2),q(:,3),'r','LineWidth',1);
         hold on;
     else
         Forward_kinematics(Link,q_best,0);
